@@ -8,9 +8,11 @@ interface CategoryBadgeProps {
 
 const CategoryBadge = ({ category }: CategoryBadgeProps) => {
   return (
-    <Badge asChild variant="secondary" className="hover:bg-telegram-purple/20">
-      <Link to={`/blog/category/${category.toLowerCase()}`}>{category}</Link>
-    </Badge>
+    <Link to={`/blog/category/${category.toLowerCase()}`}>
+      <Badge variant="secondary" className="hover:bg-telegram-purple/20">
+        {category}
+      </Badge>
+    </Link>
   );
 };
 
