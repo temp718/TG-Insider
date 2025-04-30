@@ -24,7 +24,7 @@ const BlogPostCard = ({ post, featured = false }: BlogPostCardProps) => {
   const { title, excerpt, date, author, imageUrl, slug } = post;
   
   return (
-    <Card className={`overflow-hidden h-full ${featured ? 'border-telegram-purple' : ''}`}>
+    <Card className={`overflow-hidden h-full card-hover ${featured ? 'border-telegram-purple/50' : ''}`}>
       {imageUrl && (
         <div className="aspect-video overflow-hidden">
           <img 
@@ -35,22 +35,22 @@ const BlogPostCard = ({ post, featured = false }: BlogPostCardProps) => {
         </div>
       )}
       <CardHeader className="pt-4 pb-2">
-        <div className="flex items-center gap-2 text-sm text-foreground/70 mb-2">
+        <div className="flex items-center gap-2 text-sm text-foreground/60 mb-2">
           <Calendar className="h-3 w-3" />
           <span>{date}</span>
           <span className="mx-1">•</span>
           <span>{author}</span>
         </div>
-        <Link to={`/blog/${slug}`} className="hover:underline">
+        <Link to={`/blog/${slug}`} className="hover:text-telegram-purple transition-colors">
           <h3 className="text-xl font-bold line-clamp-2">{title}</h3>
         </Link>
       </CardHeader>
       <CardContent className="py-2">
-        <p className="text-foreground/80 line-clamp-3">{excerpt}</p>
+        <p className="text-foreground/70 line-clamp-3">{excerpt}</p>
       </CardContent>
       <CardFooter>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/blog/${slug}`}>Read More</Link>
+        <Button variant="ghost" size="sm" asChild className="text-telegram-purple hover:text-telegram-purple/80 hover:bg-telegram-purple/10 px-0">
+          <Link to={`/blog/${slug}`}>Read More →</Link>
         </Button>
       </CardFooter>
     </Card>

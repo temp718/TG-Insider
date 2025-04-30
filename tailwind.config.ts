@@ -64,11 +64,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				telegram: {
-					purple: '#8B5CF6',
-					blue: '#0EA5E9',
-					accent: '#7E69AB',
-					light: '#F1F0FB',
-					dark: '#221F26',
+					purple: '#7E69AB',  // Softer purple
+					blue: '#5B8CC9',    // Softer blue
+					accent: '#6D5C94',  // Softer accent
+					light: '#F1F0FB',   // Kept the same
+					dark: '#221F26',    // Kept the same
 				}
 			},
 			borderRadius: {
@@ -105,6 +105,14 @@ export default {
 			},
 			fontFamily: {
 				sans: ['Inter', 'sans-serif']
+			},
+			boxShadow: {
+				'soft': '0 4px 20px rgba(0, 0, 0, 0.08)',
+				'softer': '0 2px 10px rgba(0, 0, 0, 0.05)',
+			},
+			backgroundImage: {
+				'gradient-soft': 'linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.05) 100%)',
+				'hero-pattern': 'linear-gradient(to bottom right, rgba(126, 105, 171, 0.08), rgba(91, 140, 201, 0.08))'
 			}
 		}
 	},

@@ -6,7 +6,6 @@ import BlogPostGrid from "@/components/BlogPostGrid";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import NewsletterSubscribe from "@/components/NewsletterSubscribe";
-import { BlogPost } from "@/components/BlogPostCard";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
@@ -30,31 +29,35 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="py-12 md:py-16 bg-telegram-light">
+      <div className="py-16 md:py-20 bg-gradient-to-br from-telegram-purple/10 to-telegram-blue/10">
         <div className="container">
-          <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">Telegram Insider Blog</h1>
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-foreground/60" />
-              <Input 
-                type="text"
-                placeholder="Search articles..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+          <h1 className="text-4xl md:text-5xl font-bold text-center gradient-text mb-10">Telegram Insider Blog</h1>
+          <div className="max-w-2xl mx-auto relative">
+            <div className="absolute left-3 top-3 text-foreground/50">
+              <Search className="h-5 w-5" />
             </div>
+            <Input 
+              type="text"
+              placeholder="Search articles..."
+              className="pl-10 py-6 text-lg shadow-softer bg-white/80 backdrop-blur-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
       </div>
       
-      <div className="container py-8">
-        <div className="flex flex-wrap gap-2 mb-8">
+      <div className="container py-10">
+        <div className="flex flex-wrap gap-2 mb-10">
           {blogCategories.map((category) => (
             <Badge 
               key={category} 
               variant={selectedCategory === category ? "default" : "outline"}
-              className="cursor-pointer"
+              className={`cursor-pointer text-sm py-1.5 px-4 rounded-full ${
+                selectedCategory === category 
+                  ? 'bg-telegram-purple hover:bg-telegram-purple/90' 
+                  : 'hover:bg-telegram-purple/10 hover:text-telegram-purple'
+              }`}
               onClick={() => handleCategoryClick(category)}
             >
               {category}
@@ -67,13 +70,14 @@ const Blog = () => {
             <BlogPostGrid posts={filteredPosts} />
           </>
         ) : (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold mb-2">No articles found</h3>
-            <p className="text-foreground/70 mb-4">
-              Try adjusting your search or filter criteria
+          <div className="text-center py-20 bg-white rounded-2xl shadow-softer">
+            <h3 className="text-2xl font-semibold mb-4">No articles found</h3>
+            <p className="text-foreground/70 mb-6 max-w-md mx-auto">
+              Try adjusting your search or filter criteria to find what you're looking for.
             </p>
             <Button 
               variant="outline" 
+              className="border-2 border-telegram-purple/30 hover:border-telegram-purple text-telegram-purple hover:bg-telegram-purple/5"
               onClick={() => {
                 setSelectedCategory(null);
                 setSearchQuery("");
@@ -85,8 +89,10 @@ const Blog = () => {
         )}
       </div>
       
-      <div className="container py-12">
-        <NewsletterSubscribe className="max-w-3xl mx-auto" />
+      <div className="container py-16">
+        <div className="max-w-3xl mx-auto bg-gradient-to-br from-telegram-purple/5 to-telegram-blue/5 p-8 rounded-2xl shadow-softer">
+          <NewsletterSubscribe />
+        </div>
       </div>
     </div>
   );
