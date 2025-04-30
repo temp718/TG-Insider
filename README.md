@@ -1,73 +1,92 @@
-# Welcome to your Lovable project
 
-## Project info
+# Telegram Insider
 
-**URL**: https://lovable.dev/projects/520ea5f8-6c29-45bf-b7e2-f8db892adccc
+A blog and Telegram bot mini-app focused on Telegram features, especially Stars.
 
-## How can I edit this code?
+## Project Structure
 
-There are several ways of editing your application.
+- `/src` - Frontend React application
+- `/server` - Backend Express server and Telegram bot
+- `/public` - Static assets
 
-**Use Lovable**
+## Development Setup
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/520ea5f8-6c29-45bf-b7e2-f8db892adccc) and start prompting.
+1. Clone the repository
+2. Copy `.env.example` to `.env` and fill in your values
+3. Install dependencies:
+   ```
+   npm install
+   cd server
+   npm install
+   cd ..
+   ```
+4. Start the development servers:
+   - Frontend: `npm run dev`
+   - Backend: `cd server && npm run dev`
 
-Changes made via Lovable will be committed automatically to this repo.
+## Deployment to Railway
 
-**Use your preferred IDE**
+1. Connect your GitHub repository to Railway
+2. Set up the required environment variables in Railway:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `TELEGRAM_BOT_TOKEN`
+   - `ADMIN_USER_IDS` (comma-separated list of Telegram user IDs)
+   - `NEWSLETTER_API_KEY` (if using an external newsletter service)
+3. Deploy using the Railway UI
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Database Schema (Supabase)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+You'll need to create these tables in Supabase:
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Users Table
+```sql
+create table public.users (
+  id uuid primary key default uuid_generate_v4(),
+  telegram_id text not null unique,
+  first_name text,
+  last_name text,
+  username text,
+  joined_at timestamp with time zone default now(),
+  last_active timestamp with time zone default now()
+);
 ```
 
-**Edit a file directly in GitHub**
+### Newsletter Subscriptions Table
+```sql
+create table public.newsletter_subscriptions (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null unique,
+  name text,
+  telegram_id text,
+  subscribed_at timestamp with time zone default now(),
+  foreign key (telegram_id) references public.users(telegram_id)
+);
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Blog Posts Table
+```sql
+create table public.blog_posts (
+  id uuid primary key default uuid_generate_v4(),
+  title text not null,
+  slug text not null unique,
+  excerpt text not null,
+  content text not null,
+  author_id uuid,
+  category text not null,
+  image_url text,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  published boolean default false,
+  foreign key (author_id) references auth.users(id)
+);
+```
 
-**Use GitHub Codespaces**
+## Bot Commands
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/520ea5f8-6c29-45bf-b7e2-f8db892adccc) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `/start` - Start the bot and register user
+- `/help` - Show help message with available commands
+- `/subscribe` - Get a link to subscribe to the newsletter
+- `/latest` - Get the latest blog post
+- `/stars` - Learn about Telegram Stars
+- `/stats` - Admin only - get bot statistics
