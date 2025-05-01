@@ -1,9 +1,13 @@
-
 const express = require('express');
 const supabase = require('../db/supabase');
 const config = require('../config');
 
 const router = express.Router();
+
+// Health check endpoint for deployment platforms
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Newsletter subscription endpoint
 router.post('/newsletter/subscribe', async (req, res) => {

@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000  # Using a specific port number that will be exposed
+        value: 10000  # Explicitly set the port to match what's in config
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -23,3 +23,4 @@ services:
           type: web
           name: telegram-insider
           property: url
+    healthCheckPath: /api/health  # Add a health check endpoint
