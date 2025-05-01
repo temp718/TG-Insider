@@ -213,11 +213,35 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Start the server and log the port it's running on
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
 
 // Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    bot.stop('SIGINT');
+  });
+});
+
+process.once('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    bot.stop('SIGTERM');
+  });
+});
+
+// Start the bot if we have a token
+if (TELEGRAM_BOT_TOKEN) {
+  bot.launch().then(() => {
+    console.log('Telegram bot started successfully');
+  }).catch(err => {
+    console.error('Error starting Telegram bot:', err);
+  });
+} else {
+  console.warn('TELEGRAM_BOT_TOKEN not provided, bot will not start');
+}
