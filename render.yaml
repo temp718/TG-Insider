@@ -11,18 +11,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: SUPABASE_URL
-        sync: false
+        value: https://qngpqbruijccgnkidkxb.supabase.co
       - key: SUPABASE_ANON_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuZ3BxYnJ1aWpjY2dua2lka3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5MDIzMTYsImV4cCI6MjA2MTQ3ODMxNn0.pjLtsXpH0XrB3P15YY5wJcviPb-WuxDDh4xXyxo7WXk
       - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: ADMIN_USER_IDS
-        value: "YOUR_ADMIN_IDS_HERE"
+        value: your-bot-token
     healthCheckPath: /health
-    autoDeploy: true
-
-envGroups:
-  - name: supabase-credentials
-    environment: production
-  - name: telegram-credentials
-    environment: production
