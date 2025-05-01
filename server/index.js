@@ -9,82 +9,63 @@ import dotenv from 'dotenv';
 // Initialize environment variables
 dotenv.config();
 
-// ES Modules fix for __dirname
+// ES Modules fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Server configuration
-const PORT = process.env.PORT || 8080;
+// Validate Supabase URL
+const SUPABASE_URL = process.env.SUPABASE_URL;
+if (!SUPABASE_URL || !SUPABASE_URL.startsWith('https://')) {
+  throw new Error('Invalid Supabase URL. Must start with https://');
+}
+
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+if (!SUPABASE_ANON_KEY) {
+  throw new Error('Missing Supabase anon key');
+}
+
+// Initialize services
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const app = express();
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(express.json());
 app.use(cors());
 
-// Health check endpoint (REQUIRED for Render)
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
-    status: 'healthy',
-    timestamp: new Date().toISOString()
+    status: 'ok',
+    supabase: !!supabase,
+    port: PORT
   });
 });
 
-// Initialize services if environment variables exist
-let supabase, bot;
-
-if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-  );
-}
-
+// Telegram bot initialization
 if (process.env.TELEGRAM_BOT_TOKEN) {
-  bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+  const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
   
-  bot.start((ctx) => ctx.reply('Welcome to Telegram Insider!'));
-  bot.help((ctx) => ctx.reply('Help message'));
+  bot.start((ctx) => ctx.reply('Bot is working!'));
   
   bot.launch().then(() => {
     console.log('Telegram bot started');
-  }).catch(err => {
-    console.error('Bot failed to start:', err);
-  });
+  }).catch(console.error);
 }
 
-// Production static file serving
+// Production static files
 if (process.env.NODE_ENV === 'production') {
-  const staticPath = path.join(__dirname, '../../dist');
-  app.use(express.static(staticPath));
+  app.use(express.static(path.join(__dirname, '../../dist')));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
+    res.sendFile(path.join(__dirname, '../../dist/index.html'));
   });
 }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
-
-// Start server with explicit host binding
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-  Server running in ${process.env.NODE_ENV || 'development'} mode
-  Listening on port ${PORT}
-  Health check: http://0.0.0.0:${PORT}/health
+  Server running on port ${PORT}
+  Supabase connected: ${!!supabase}
+  Environment: ${process.env.NODE_ENV || 'development'}
   `);
-});
-
-// Graceful shutdown
-['SIGINT', 'SIGTERM'].forEach(signal => {
-  process.on(signal, () => {
-    console.log(`\nReceived ${signal}, shutting down gracefully...`);
-    server.close(() => {
-      if (bot) {
-        bot.stop(signal);
-      }
-      process.exit(0);
-    });
-  });
 });
