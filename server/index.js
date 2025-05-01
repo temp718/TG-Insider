@@ -39,6 +39,9 @@ if (config.NODE_ENV === 'production') {
   });
 }
 
+// Log that we're starting the server
+console.log(`Starting server on port ${config.PORT}...`);
+
 // Start the server with explicit host binding
 const server = app.listen(config.PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${config.PORT}`);
