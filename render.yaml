@@ -17,9 +17,9 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: ADMIN_USER_IDS
-        value: "123456789"
-      - key: FRONTEND_URL
-        value: https://tg-insider.onrender.com
+        value: "YOUR_ADMIN_IDS_HERE"
+    healthCheckPath: /health
+    autoDeploy: true
 
 envGroups:
   - name: supabase-credentials
