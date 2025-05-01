@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3000
+        value: 10000  # Using a specific port number that will be exposed
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY

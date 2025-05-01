@@ -1,4 +1,3 @@
-
 const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
@@ -6,7 +5,7 @@ const { Telegraf } = require('telegraf');
 const cors = require('cors');
 
 // Environment variables
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Use a specific port that matches render.yaml
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -202,8 +201,14 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
   }
 });
 
+// Add a simple status endpoint to verify the server is running
+app.get('/api/status', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
 // Serve the static frontend files
 if (process.env.NODE_ENV === 'production') {
+  console.log('Serving static files from', path.join(__dirname, '../dist'));
   // Serve static files from the React build folder
   app.use(express.static(path.join(__dirname, '../dist')));
   
@@ -213,9 +218,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Start the server and log the port it's running on
+// Start the server with explicit host binding
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
 });
 
 // Enable graceful stop
@@ -223,7 +229,7 @@ process.once('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully...');
   server.close(() => {
     console.log('Server closed');
-    bot.stop('SIGINT');
+    if (bot) bot.stop('SIGINT');
   });
 });
 
@@ -231,7 +237,7 @@ process.once('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
   server.close(() => {
     console.log('Server closed');
-    bot.stop('SIGTERM');
+    if (bot) bot.stop('SIGTERM');
   });
 });
 
