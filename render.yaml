@@ -1,26 +1,13 @@
-
 services:
   - type: web
     name: telegram-insider
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     env: node
-    buildCommand: node build.js
-    startCommand: node server/index.js
     envVars:
+      - key: PORT
+        value: 8080
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000  # Explicitly set the port to match what's in config
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: ADMIN_USER_IDS
-        sync: false
-      - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: telegram-insider
-          property: url
-    healthCheckPath: /api/health  # Add a health check endpoint
+    healthCheckPath: /health

@@ -1,6 +1,7 @@
 
 {
   "name": "telegram-insider-server",
+  "type": "module",
   "version": "1.0.0",
   "description": "Server for Telegram Insider blog and bot",
   "main": "index.js",

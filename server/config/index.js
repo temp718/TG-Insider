@@ -1,7 +1,7 @@
 
 // Environment variables configuration
 const config = {
-  PORT: process.env.PORT || 10000,
+  PORT: process.env.PORT || 8080,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
