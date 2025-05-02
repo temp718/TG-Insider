@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { Telegraf } from 'telegraf';
@@ -15,9 +14,9 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Supabase configuration - Using provided credentials
-const SUPABASE_URL = 'https://qngpqbruijccgnkidkxb.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuZ3BxYnJ1aWpjY2dua2lka3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5MDIzMTYsImV4cCI6MjA2MTQ3ODMxNn0.pjLtsXpH0XrB3P15YY5wJcviPb-WuxDDh4xXyxo7WXk';
+// Supabase configuration
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qngpqbruijccgnkidkxb.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuZ3BxYnJ1aWpjY2dua2lka3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5MDIzMTYsImV4cCI6MjA2MTQ3ODMxNn0.pjLtsXpH0XrB3P15YY5wJcviPb-WuxDDh4xXyxo7WXk';
 
 // Telegram Bot configuration
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8096236043:AAEk9vFK7TMklFivxA-FNG77zFbsblqy428';
@@ -39,138 +38,142 @@ app.use(cors());
 // Bot initialization
 let bot = null;
 if (TELEGRAM_BOT_TOKEN) {
-  bot = new Telegraf(TELEGRAM_BOT_TOKEN);
-  
-  // Setup basic commands
-  bot.start(async (ctx) => {
-    const { id: userId, first_name, last_name, username } = ctx.from;
+  try {
+    bot = new Telegraf(TELEGRAM_BOT_TOKEN);
     
-    try {
-      // Store user in Supabase
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({
-          telegram_id: userId.toString(),
-          first_name,
-          last_name,
-          username,
-          joined_at: new Date(),
-          last_active: new Date()
-        }, {
-          onConflict: 'telegram_id'
-        });
-  
-      if (error) {
-        console.error('Error storing user:', error);
+    // Setup basic commands
+    bot.start(async (ctx) => {
+      const { id: userId, first_name, last_name, username } = ctx.from;
+      
+      try {
+        // Store user in Supabase
+        const { data, error } = await supabase
+          .from('users')
+          .upsert({
+            telegram_id: userId.toString(),
+            first_name,
+            last_name,
+            username,
+            joined_at: new Date(),
+            last_active: new Date()
+          }, {
+            onConflict: 'telegram_id'
+          });
+    
+        if (error) {
+          console.error('Error storing user:', error);
+        }
+    
+        ctx.reply(`Welcome to Telegram Insider, ${first_name}! 🌟\n\nThis bot helps you stay updated with the latest Telegram features, especially Stars. Use /help to see available commands.`);
+      } catch (err) {
+        console.error('Error in start command:', err);
+        ctx.reply('Welcome! There was an issue connecting to our database. Please try again later.');
       }
-  
-      ctx.reply(`Welcome to Telegram Insider, ${first_name}! 🌟\n\nThis bot helps you stay updated with the latest Telegram features, especially Stars. Use /help to see available commands.`);
-    } catch (err) {
-      console.error('Error in start command:', err);
-      ctx.reply('Welcome! There was an issue connecting to our database. Please try again later.');
-    }
-  });
-  
-  bot.help((ctx) => {
-    ctx.reply(
-      'Telegram Insider Bot Commands:\n\n' +
-      '/start - Start the bot and register\n' +
-      '/help - Show this help message\n' +
-      '/subscribe - Subscribe to our newsletter\n' +
-      '/latest - Get the latest blog post\n' +
-      '/stars - Learn about Telegram Stars\n' +
-      '/stats - Get bot statistics (admin only)'
-    );
-  });
-  
-  bot.command('subscribe', async (ctx) => {
-    // Create a unique URL with user's Telegram ID for newsletter subscription
-    const telegramId = ctx.from.id;
-    const subscribeUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/subscribe?telegram_id=${telegramId}`;
+    });
     
-    ctx.reply(
-      'Subscribe to our newsletter to get the latest Telegram updates!\n\n' +
-      `Click here to subscribe: ${subscribeUrl}`
-    );
-  });
-  
-  bot.command('latest', async (ctx) => {
-    try {
-      // Get the latest blog post from Supabase
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('title, slug')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        const post = data[0];
-        const postUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/blog/${post.slug}`;
-        ctx.reply(`Latest article: "${post.title}"\n\nRead it here: ${postUrl}`);
-      } else {
-        ctx.reply('No blog posts found. Check back later!');
-      }
-    } catch (err) {
-      console.error('Error fetching latest post:', err);
-      ctx.reply('Sorry, I couldn\'t fetch the latest post. Please try again later.');
-    }
-  });
-  
-  bot.command('stars', (ctx) => {
-    const starsUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/stars-guide`;
-    ctx.reply(
-      'Telegram Stars are a new way to monetize content on Telegram!\n\n' +
-      `Learn more in our comprehensive guide: ${starsUrl}`
-    );
-  });
-  
-  // Admin only - stats command
-  bot.command('stats', async (ctx) => {
-    const userId = ctx.from.id.toString();
+    bot.help((ctx) => {
+      ctx.reply(
+        'Telegram Insider Bot Commands:\n\n' +
+        '/start - Start the bot and register\n' +
+        '/help - Show this help message\n' +
+        '/subscribe - Subscribe to our newsletter\n' +
+        '/latest - Get the latest blog post\n' +
+        '/stars - Learn about Telegram Stars\n' +
+        '/stats - Get bot statistics (admin only)'
+      );
+    });
     
-    if (!ADMIN_USER_IDS.includes(userId)) {
-      return ctx.reply('Sorry, this command is only available to admins.');
-    }
-    
-    try {
-      // Get user stats
-      const { count: userCount } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      
-      const { count: subscriberCount } = await supabase
-        .from('newsletter_subscriptions')
-        .select('*', { count: 'exact', head: true });
-      
-      const totalUsers = userCount || 0;
-      const totalSubscribers = subscriberCount || 0;
+    bot.command('subscribe', async (ctx) => {
+      // Create a unique URL with user's Telegram ID for newsletter subscription
+      const telegramId = ctx.from.id;
+      const subscribeUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/subscribe?telegram_id=${telegramId}`;
       
       ctx.reply(
-        '📊 Bot Statistics 📊\n\n' +
-        `Total users: ${totalUsers}\n` +
-        `Newsletter subscribers: ${totalSubscribers}\n` +
-        `Subscription rate: ${totalUsers > 0 ? Math.round((totalSubscribers / totalUsers) * 100) : 0}%`
+        'Subscribe to our newsletter to get the latest Telegram updates!\n\n' +
+        `Click here to subscribe: ${subscribeUrl}`
       );
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-      ctx.reply('Sorry, there was an error retrieving statistics.');
-    }
-  });
-  
-  // Handle other messages
-  bot.on('text', (ctx) => {
-    ctx.reply('I don\'t understand that command. Use /help to see available commands.');
-  });
-  
-  // Launch bot
-  bot.launch()
-    .then(() => console.log('Telegram bot started successfully'))
-    .catch(err => console.error('Error starting Telegram bot:', err));
-  
-  // Make bot available to API routes
-  app.set('bot', bot);
+    });
+    
+    bot.command('latest', async (ctx) => {
+      try {
+        // Get the latest blog post from Supabase
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('title, slug')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const post = data[0];
+          const postUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/blog/${post.slug}`;
+          ctx.reply(`Latest article: "${post.title}"\n\nRead it here: ${postUrl}`);
+        } else {
+          ctx.reply('No blog posts found. Check back later!');
+        }
+      } catch (err) {
+        console.error('Error fetching latest post:', err);
+        ctx.reply('Sorry, I couldn\'t fetch the latest post. Please try again later.');
+      }
+    });
+    
+    bot.command('stars', (ctx) => {
+      const starsUrl = `${process.env.FRONTEND_URL || 'https://telegram-insider.onrender.com'}/stars-guide`;
+      ctx.reply(
+        'Telegram Stars are a new way to monetize content on Telegram!\n\n' +
+        `Learn more in our comprehensive guide: ${starsUrl}`
+      );
+    });
+    
+    // Admin only - stats command
+    bot.command('stats', async (ctx) => {
+      const userId = ctx.from.id.toString();
+      
+      if (!ADMIN_USER_IDS.includes(userId)) {
+        return ctx.reply('Sorry, this command is only available to admins.');
+      }
+      
+      try {
+        // Get user stats
+        const { count: userCount } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: subscriberCount } = await supabase
+          .from('newsletter_subscriptions')
+          .select('*', { count: 'exact', head: true });
+        
+        const totalUsers = userCount || 0;
+        const totalSubscribers = subscriberCount || 0;
+        
+        ctx.reply(
+          '📊 Bot Statistics 📊\n\n' +
+          `Total users: ${totalUsers}\n` +
+          `Newsletter subscribers: ${totalSubscribers}\n` +
+          `Subscription rate: ${totalUsers > 0 ? Math.round((totalSubscribers / totalUsers) * 100) : 0}%`
+        );
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+        ctx.reply('Sorry, there was an error retrieving statistics.');
+      }
+    });
+    
+    // Handle other messages
+    bot.on('text', (ctx) => {
+      ctx.reply('I don\'t understand that command. Use /help to see available commands.');
+    });
+    
+    // Launch bot
+    bot.launch()
+      .then(() => console.log('Telegram bot started successfully'))
+      .catch(err => console.error('Error starting Telegram bot:', err));
+    
+    // Make bot available to API routes
+    app.set('bot', bot);
+  } catch (error) {
+    console.error('Failed to initialize Telegram bot:', error);
+  }
 }
 
 // API Routes
@@ -237,22 +240,28 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Define the frontend build path
+// Define the frontend build path - go up one directory from server
 const frontendPath = path.join(__dirname, '../dist');
+
+// Log paths for debugging
+console.log('Server directory:', __dirname);
+console.log('Frontend path:', frontendPath);
 
 // Check if the dist directory exists and log the result
 fs.access(frontendPath, fs.constants.F_OK, (err) => {
-  console.log(`Dist directory ${err ? 'does not exist' : 'exists'}`);
+  console.log(`Dist directory ${err ? 'does not exist' : 'exists'} at path: ${frontendPath}`);
   if (err) {
     console.error(`Error accessing frontend path: ${err.message}`);
-    console.log('Current directory:', __dirname);
-    console.log('Looking for:', frontendPath);
     
     // Try to list parent directory contents to debug
     try {
       const parentDir = path.join(__dirname, '..');
       const files = fs.readdirSync(parentDir);
       console.log('Parent directory contents:', files);
+      
+      // Create dist directory if it doesn't exist
+      fs.mkdirSync(frontendPath, { recursive: true });
+      console.log('Created dist directory at:', frontendPath);
     } catch (readErr) {
       console.error('Error reading parent directory:', readErr);
     }
@@ -262,7 +271,7 @@ fs.access(frontendPath, fs.constants.F_OK, (err) => {
 // Serve static files from the React frontend app
 app.use(express.static(frontendPath));
 
-// Anything that doesn't match the above, send back index.html
+// Special case for index.html - add more detailed error handling
 app.get('*', (req, res) => {
   // Check if index.html exists before sending
   const indexPath = path.join(frontendPath, 'index.html');
@@ -270,7 +279,20 @@ app.get('*', (req, res) => {
   fs.access(indexPath, fs.constants.F_OK, (err) => {
     if (err) {
       console.error(`Error: index.html not found at ${indexPath}`);
-      return res.status(404).send('Frontend not built. Please run npm run build first.');
+      
+      // More informative error response
+      return res.status(404).send(`
+        <html>
+          <head><title>Frontend Not Built</title></head>
+          <body>
+            <h1>Frontend not built</h1>
+            <p>The frontend build files were not found at ${indexPath}</p>
+            <p>Please run <code>npm run build</code> first or check your build configuration.</p>
+            <p>Server is running, but frontend assets are missing.</p>
+            <p><a href="/api/status">Check API Status</a></p>
+          </body>
+        </html>
+      `);
     }
     
     res.sendFile(indexPath);
@@ -286,6 +308,7 @@ app.listen(PORT, '0.0.0.0', () => {
   Environment: ${process.env.NODE_ENV || 'development'}
   Health check available at: /health
   API status available at: /api/status
+  Frontend path: ${frontendPath}
   `);
 });
 
