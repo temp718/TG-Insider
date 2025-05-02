@@ -53,10 +53,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // Fix TypeScript error by removing IconLeft/IconRight properties
-        // and using the DayPicker's supported component types instead
-        PrevButton: () => <ChevronLeft className="h-4 w-4" />,
-        NextButton: () => <ChevronRight className="h-4 w-4" />,
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" {...props} />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" {...props} />,
       }}
       {...props}
     />
