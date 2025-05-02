@@ -1,28 +1,46 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, Star } from "lucide-react";
+import { CheckCircle, Star, MessageSquare } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Subscribe = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState("weekly");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTelegramConnected, setIsTelegramConnected] = useState(false);
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract telegram_id from URL if present
+  const params = new URLSearchParams(location.search);
+  const telegramId = params.get('telegram_id');
+
+  useEffect(() => {
+    if (telegramId) {
+      setIsTelegramConnected(true);
+      toast({
+        title: "Telegram Connected",
+        description: "Your subscription will be linked to your Telegram account.",
+      });
+    }
+  }, [telegramId, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !name.trim()) {
+    if (!email.trim()) {
       toast({
         title: "Error",
-        description: "Please fill all required fields.",
+        description: "Please enter a valid email address.",
         variant: "destructive",
       });
       return;
@@ -30,17 +48,59 @@ const Subscribe = () => {
     
     setIsSubmitting(true);
     
-    // This would connect to your backend API
-    // We're simulating success for now
-    setTimeout(() => {
-      toast({
-        title: "Subscription Successful!",
-        description: "Thank you for subscribing to our newsletter.",
+    try {
+      // Get API URL from environment or use default
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      
+      const response = await fetch(`${apiUrl}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          name: name.trim() || undefined,
+          telegramId: telegramId || undefined,
+          frequency
+        }),
       });
-      setEmail("");
-      setName("");
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Subscription Successful!",
+          description: "Thank you for subscribing to our newsletter.",
+        });
+        
+        // If coming from Telegram, show additional message
+        if (telegramId) {
+          toast({
+            title: "Telegram Connected",
+            description: "You'll also receive updates in your Telegram app.",
+          });
+        }
+        
+        setEmail("");
+        setName("");
+        
+        // Redirect to homepage after successful subscription
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      } else {
+        throw new Error(data.message || 'Failed to subscribe');
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      toast({
+        title: "Subscription Failed",
+        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const benefits = [
@@ -63,6 +123,12 @@ const Subscribe = () => {
             <p className="text-lg text-foreground/80">
               Get the latest updates, guides, and insights about Telegram features delivered directly to your inbox.
             </p>
+            {isTelegramConnected && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-telegram-purple/10 px-4 py-2 rounded-full">
+                <MessageSquare className="h-5 w-5 text-telegram-purple" />
+                <span className="font-medium text-telegram-purple">Connected via Telegram</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -70,7 +136,14 @@ const Subscribe = () => {
       <div className="container py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-6">Subscribe to Our Newsletter</h2>
+            <h2 className="text-2xl font-bold mb-6">
+              Subscribe to Our Newsletter
+              {isTelegramConnected && (
+                <span className="block text-sm font-normal text-telegram-purple mt-2">
+                  Your Telegram account will be linked
+                </span>
+              )}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Your Name</Label>

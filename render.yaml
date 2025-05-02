@@ -1,13 +1,20 @@
+
 services:
   - type: web
     name: telegram-insider
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: node server/index.js
     env: node
     envVars:
       - key: PORT
         value: 8080
       - key: NODE_ENV
         value: production
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8096236043:AAEk9vFK7TMklFivxA-FNG77zFbsblqy428
+      - key: ADMIN_USER_IDS
+        value: 5107333540,00011166
+      - key: FRONTEND_URL
+        value: https://telegram-insider.onrender.com
     healthCheckPath: /health

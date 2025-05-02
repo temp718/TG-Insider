@@ -32,7 +32,10 @@ const NewsletterSubscribe = ({ className = "" }: { className?: string }) => {
     setIsSubmitting(true);
     
     try {
+      // Get API URL from environment or use default
       const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      console.log(`Subscribing with API URL: ${apiUrl}`);
+      
       const response = await fetch(`${apiUrl}/newsletter/subscribe`, {
         method: 'POST',
         headers: {
@@ -40,8 +43,8 @@ const NewsletterSubscribe = ({ className = "" }: { className?: string }) => {
         },
         body: JSON.stringify({
           email,
-          name,
-          telegramId
+          name: name.trim() || undefined, // Only send if provided
+          telegramId: telegramId || undefined // Only send if provided
         }),
       });
       
@@ -54,6 +57,14 @@ const NewsletterSubscribe = ({ className = "" }: { className?: string }) => {
         });
         setEmail("");
         setName("");
+        
+        // If coming from Telegram, show additional message
+        if (telegramId) {
+          toast({
+            title: "Telegram Connected",
+            description: "You'll also receive updates in your Telegram app.",
+          });
+        }
       } else {
         throw new Error(data.message || 'Failed to subscribe');
       }
@@ -77,6 +88,7 @@ const NewsletterSubscribe = ({ className = "" }: { className?: string }) => {
       </div>
       <p className="text-foreground/80 mb-6">
         Get the latest Telegram updates, insider news, and feature explanations delivered directly to your inbox.
+        {telegramId && <span className="block mt-2 font-medium text-telegram-purple">Your Telegram account will be linked for convenient updates!</span>}
       </p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <Input
