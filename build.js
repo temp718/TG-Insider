@@ -8,14 +8,19 @@ if (!fs.existsSync(path.resolve(__dirname, 'dist'))) {
   fs.mkdirSync(path.resolve(__dirname, 'dist'), { recursive: true });
 }
 
-console.log('Installing frontend dependencies...');
-execSync('npm install', { stdio: 'inherit' });
-
-console.log('Installing required dependencies for build...');
-execSync('npm install @vitejs/plugin-react --save-dev', { stdio: 'inherit' });
-
-console.log('Building frontend...');
+// Install dependencies with explicit error handling
 try {
+  console.log('Installing dependencies...');
+  execSync('npm install', { stdio: 'inherit' });
+  console.log('Dependencies installed successfully!');
+} catch (error) {
+  console.error('Failed to install dependencies:', error);
+  process.exit(1);
+}
+
+// Build frontend with explicit error handling
+try {
+  console.log('Building frontend...');
   execSync('npm run build', { stdio: 'inherit' });
   console.log('Frontend built successfully!');
 } catch (error) {
@@ -23,10 +28,15 @@ try {
   process.exit(1);
 }
 
-console.log('Installing server dependencies...');
-execSync('cd server && npm install', { stdio: 'inherit' });
-
-console.log('Build completed successfully!');
+// Install server dependencies with explicit error handling
+try {
+  console.log('Installing server dependencies...');
+  execSync('cd server && npm install', { stdio: 'inherit' });
+  console.log('Server dependencies installed successfully!');
+} catch (error) {
+  console.error('Failed to install server dependencies:', error);
+  process.exit(1);
+}
 
 // Verify the build output
 if (fs.existsSync(path.resolve(__dirname, 'dist/index.html'))) {
@@ -35,3 +45,5 @@ if (fs.existsSync(path.resolve(__dirname, 'dist/index.html'))) {
   console.error('Build verification failed: dist/index.html does not exist');
   process.exit(1);
 }
+
+console.log('Build completed successfully!');
