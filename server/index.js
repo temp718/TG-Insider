@@ -6,6 +6,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Initialize environment variables
 dotenv.config();
@@ -19,8 +20,8 @@ const SUPABASE_URL = 'https://qngpqbruijccgnkidkxb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuZ3BxYnJ1aWpjY2dua2lka3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5MDIzMTYsImV4cCI6MjA2MTQ3ODMxNn0.pjLtsXpH0XrB3P15YY5wJcviPb-WuxDDh4xXyxo7WXk';
 
 // Telegram Bot configuration
-const TELEGRAM_BOT_TOKEN = '8096236043:AAEk9vFK7TMklFivxA-FNG77zFbsblqy428';
-const ADMIN_USER_IDS = ['5107333540', '00011166'];
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8096236043:AAEk9vFK7TMklFivxA-FNG77zFbsblqy428';
+const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS || '5107333540,00011166').split(',');
 
 // Validate Supabase URL
 if (!SUPABASE_URL.startsWith('https://')) {
@@ -29,7 +30,7 @@ if (!SUPABASE_URL.startsWith('https://')) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 
 // Middleware
 app.use(express.json());
@@ -236,12 +237,44 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Define the frontend build path
+const frontendPath = path.join(__dirname, '../dist');
+
+// Check if the dist directory exists and log the result
+fs.access(frontendPath, fs.constants.F_OK, (err) => {
+  console.log(`Dist directory ${err ? 'does not exist' : 'exists'}`);
+  if (err) {
+    console.error(`Error accessing frontend path: ${err.message}`);
+    console.log('Current directory:', __dirname);
+    console.log('Looking for:', frontendPath);
+    
+    // Try to list parent directory contents to debug
+    try {
+      const parentDir = path.join(__dirname, '..');
+      const files = fs.readdirSync(parentDir);
+      console.log('Parent directory contents:', files);
+    } catch (readErr) {
+      console.error('Error reading parent directory:', readErr);
+    }
+  }
+});
+
 // Serve static files from the React frontend app
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(frontendPath));
 
 // Anything that doesn't match the above, send back index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  // Check if index.html exists before sending
+  const indexPath = path.join(frontendPath, 'index.html');
+  
+  fs.access(indexPath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(`Error: index.html not found at ${indexPath}`);
+      return res.status(404).send('Frontend not built. Please run npm run build first.');
+    }
+    
+    res.sendFile(indexPath);
+  });
 });
 
 // Start server
