@@ -24,6 +24,27 @@ try {
   execSync('npm run build', { stdio: 'inherit' });
   console.log('Frontend built successfully!');
 
+  // Create a simple index.html if it doesn't exist (fallback)
+  if (!fs.existsSync(path.resolve(__dirname, 'dist/index.html'))) {
+    console.log('Creating fallback index.html...');
+    const fallbackHtml = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Telegram Insider</title>
+        </head>
+        <body>
+          <div id="root">Loading...</div>
+          <script src="/src/main.tsx" type="module"></script>
+        </body>
+      </html>
+    `;
+    fs.writeFileSync(path.resolve(__dirname, 'dist/index.html'), fallbackHtml);
+    console.log('Fallback index.html created');
+  }
+
   // Install server dependencies with explicit error handling
   console.log('Installing server dependencies...');
   execSync('cd server && npm install', { stdio: 'inherit' });
@@ -36,6 +57,15 @@ try {
     // List contents of dist directory for debugging
     const distContents = fs.readdirSync(path.resolve(__dirname, 'dist'));
     console.log('Contents of dist directory:', distContents);
+    
+    // Copy dist to server/public for easier serving
+    const serverPublicPath = path.resolve(__dirname, 'server/public');
+    if (!fs.existsSync(serverPublicPath)) {
+      fs.mkdirSync(serverPublicPath, { recursive: true });
+    }
+    
+    fs.cpSync(distPath, serverPublicPath, { recursive: true });
+    console.log('Copied build files to server/public directory');
   } else {
     console.error('Build verification failed: dist/index.html does not exist');
     
