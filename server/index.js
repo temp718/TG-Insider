@@ -1,4 +1,4 @@
- import express from 'express';
+import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { Telegraf } from 'telegraf';
 import cors from 'cors';
@@ -12,6 +12,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Ensure proper Supabase URL formatting
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
@@ -19,7 +20,12 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase credentials');
 }
 
-const formattedSupabaseUrl = supabaseUrl.startsWith('https://') ? supabaseUrl : `https://${supabaseUrl}`;
+// Ensure the URL has the https prefix
+const formattedSupabaseUrl = supabaseUrl.startsWith('https://') 
+  ? supabaseUrl 
+  : `https://${supabaseUrl}`;
+
+// Create Supabase client with proper URL
 const supabase = createClient(formattedSupabaseUrl, supabaseKey);
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -37,6 +43,9 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
       const { id: userId, first_name, last_name, username } = ctx.from;
       
       try {
+        console.log(`Saving user to database: ${userId}, ${first_name}`);
+        
+        // Insert user data with proper timestamp formatting
         const { data, error } = await supabase
           .from('users')
           .upsert({
@@ -44,13 +53,18 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
             first_name,
             last_name,
             username,
-            joined_at: new Date(),
-            last_active: new Date()
+            joined_at: new Date().toISOString(),
+            last_active: new Date().toISOString()
           }, {
             onConflict: 'telegram_id'
           });
     
-        if (error) console.error('Error storing user:', error);
+        if (error) {
+          console.error('Error storing user:', error);
+        } else {
+          console.log('User saved successfully');
+        }
+        
         ctx.reply(`Welcome to Telegram Insider, ${first_name}! 🌟\n\nUse /help for commands.`);
       } catch (err) {
         console.error('Error in start command:', err);
@@ -146,7 +160,7 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     });
     
     bot.launch()
-      .then(() => console.log('Bot started'))
+      .then(() => console.log('Bot started successfully'))
       .catch(err => console.error('Bot error:', err));
     
     app.set('bot', bot);
@@ -155,20 +169,25 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
   }
 }
 
+// Fix newsletter subscription endpoint
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
-    const { email, name, telegramId } = req.body;
+    const { email, name, telegramId, frequency } = req.body;
     
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email required' });
     }
     
+    console.log(`Saving newsletter subscription: ${email}, ${name}, telegram ID: ${telegramId}`);
+    
+    // Insert subscription with proper timestamp formatting
     const { data, error } = await supabase
       .from('newsletter_subscriptions')
       .upsert({
         email,
         name,
         telegram_id: telegramId,
+        frequency: frequency || 'weekly',
         subscribed_at: new Date().toISOString()
       }, {
         onConflict: 'email'
@@ -176,24 +195,27 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     
     if (error) {
       console.error('Subscription error:', error);
-      return res.status(500).json({ success: false, message: 'Subscribe failed' });
+      return res.status(500).json({ success: false, message: 'Subscribe failed: ' + error.message });
     }
+    
+    console.log('Subscription saved successfully');
     
     if (bot && telegramId) {
       try {
         await bot.telegram.sendMessage(
           telegramId,
-          `Subscribed: ${email} to newsletter.`
+          `Successfully subscribed: ${email} to our newsletter!`
         );
+        console.log(`Sent confirmation to Telegram user: ${telegramId}`);
       } catch (botError) {
-        console.error('Telegram error:', botError);
+        console.error('Telegram confirmation error:', botError);
       }
     }
     
-    return res.status(200).json({ success: true, message: 'Subscribed' });
+    return res.status(200).json({ success: true, message: 'Subscribed successfully' });
   } catch (err) {
     console.error('Subscribe error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
   }
 });
 

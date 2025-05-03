@@ -36,19 +36,26 @@ const NewsletterSubscribe = ({ className = "" }: { className?: string }) => {
       const apiUrl = import.meta.env.VITE_API_URL || '/api';
       console.log(`Subscribing with API URL: ${apiUrl}`);
       
+      // Format the request data
+      const requestData = {
+        email: email.trim(),
+        name: name.trim() || undefined,
+        telegramId: telegramId || undefined
+      };
+      
+      console.log("Sending subscription request:", requestData);
+      
       const response = await fetch(`${apiUrl}/newsletter/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          name: name.trim() || undefined, // Only send if provided
-          telegramId: telegramId || undefined // Only send if provided
-        }),
+        body: JSON.stringify(requestData),
       });
       
+      console.log("Subscription response status:", response.status);
       const data = await response.json();
+      console.log("Subscription response data:", data);
       
       if (response.ok) {
         toast({
